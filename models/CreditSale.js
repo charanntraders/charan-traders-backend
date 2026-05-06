@@ -8,6 +8,15 @@ const creditSaleSchema = new mongoose.Schema({
   unit: { type: String, default: 'kg', trim: true },
   rate: { type: Number, required: true, min: 0 },
   amount: { type: Number, required: true, min: 0 },
+  items: [{ 
+  materialName: String, 
+  quantity: Number, 
+  unit: String, 
+  rate: Number, 
+  amount: Number 
+}],
+loading: { type: Number, default: 0 },
+transport: { type: Number, default: 0 },
   notes: { type: String, trim: true },
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date },
