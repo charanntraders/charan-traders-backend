@@ -3,8 +3,7 @@ const mongoose = require('mongoose');
 const quoteItemSchema = new mongoose.Schema({
   brand: { 
     type: String, 
-    required: true,
-    enum: ['Primegold', 'Meenakshi', 'Indus', 'Vizag', 'Shyam', 'JSW','General']
+     default: 'General'
   },
   size: { type: String, required: true },
   numberOfRods: { type: Number, required: true, min: 1 },
