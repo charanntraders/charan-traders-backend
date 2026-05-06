@@ -62,10 +62,16 @@ router.post('/', async (req, res) => {
     if (!customerName || !items || !items.length) return res.status(400).json({ error: 'Missing required fields' });
     
     const processedItems = items.map(item => ({
-      ...item,
-      totalWeight: item.numberOfRods * item.weightPerRod,
-      amount: item.numberOfRods * item.weightPerRod * item.ratePerKg
-    }));
+      brand: 'General',
+      description: item.description || item.brand || 'Item',
+      size: item.unit || 'piece',
+      numberOfRods: parseFloat(item.quantity) || item.numberOfRods || 1,
+      weightPerRod: 1,
+      totalWeight: parseFloat(item.quantity) || item.numberOfRods || 1,
+      ratePerKg: parseFloat(item.rate) || item.ratePerKg || 0,
+      amount: (parseFloat(item.quantity) || 1) * (parseFloat(item.rate) || 0),
+      unit: item.unit || 'piece'
+}));
     
     const totalWeight = processedItems.reduce((sum, i) => sum + i.totalWeight, 0);
     const totalAmount = processedItems.reduce((sum, i) => sum + i.amount, 0);
