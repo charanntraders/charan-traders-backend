@@ -62,7 +62,7 @@ router.get('/', async (req, res) => {
 // POST create cash sale
 router.post('/', async (req, res) => {
   try {
-    const { date, customerName, materialName, quantity, unit, rate, amount, paymentMode, notes } = req.body;
+    const { date, customerName, materialName, quantity, unit, rate, amount, paymentMode, notes, items, loading, transport } = req.body;
     if (!materialName || !quantity || !rate || !paymentMode) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -73,7 +73,10 @@ router.post('/', async (req, res) => {
     const sale = new CashSale({
       date: date ? moment.tz(date, IST).toDate() : moment().tz(IST).toDate(),
       customerName: customerName || 'Walk-in Customer',
-      materialName, quantity, unit: unit || 'kg', rate, amount, paymentMode, notes
+      materialName, quantity, unit: unit || 'kg', rate, amount, paymentMode, notes,
+      items: items || [],
+      loading: loading || 0,
+      transport: transport || 0
     });
     await sale.save();
     res.status(201).json(sale);
