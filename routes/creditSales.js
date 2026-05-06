@@ -88,7 +88,7 @@ router.get('/outstanding', async (req, res) => {
 // POST create credit sale
 router.post('/', async (req, res) => {
   try {
-    const { date, partyName, materialName, quantity, unit, rate, amount, notes } = req.body;
+    const { date, partyName, materialName, quantity, unit, rate, amount, notes, items, loading, transport } = req.body;
     if (!partyName || !materialName || !quantity || !rate) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -104,7 +104,10 @@ router.post('/', async (req, res) => {
     );
     const sale = new CreditSale({
       date: date ? moment.tz(date, IST).toDate() : moment().tz(IST).toDate(),
-      partyName, materialName, quantity, unit: unit || 'kg', rate, amount, notes
+      partyName, materialName, quantity, unit: unit || 'kg', rate, amount, notes,
+      items: items || [],
+      loading: loading || 0,
+      transport: transport || 0
     });
     await sale.save();
     const currentBalance = await getCustomerBalance(partyName);
