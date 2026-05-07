@@ -92,10 +92,13 @@ router.post('/', async (req, res) => {
     if (!partyName || !materialName || !quantity || !rate) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
-    const calculatedAmount = quantity * rate;
-    if (Math.abs(calculatedAmount - amount) > 0.01) {
-      return res.status(400).json({ error: 'Amount mismatch' });
-    }
+   const itemsTotal = items && items.length > 0
+  ? items.reduce((s, i) => s + (i.amount || 0), 0)
+  : quantity * rate;
+const calculatedAmount = itemsTotal + (loading || 0) + (rent || 0);
+if (Math.abs(calculatedAmount - amount) > 1) {
+  return res.status(400).json({ error: 'Amount mismatch' });
+}
     // Auto-create party if not exists
     await Party.findOneAndUpdate(
       { name: partyName },
