@@ -92,5 +92,13 @@ router.post('/adjust-balance', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
+router.delete('/:id', async (req, res) => {
+  try {
+    const party = await Party.findByIdAndDelete(req.params.id);
+    if (!party) return res.status(404).json({ error: 'Not found' });
+    res.json({ message: 'Customer deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 module.exports = router;
