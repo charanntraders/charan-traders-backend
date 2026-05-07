@@ -59,7 +59,7 @@ router.get('/ledger/:partyName', async (req, res) => {
   }
 });
 
-// GET balance for party (for old due display)
+// GET balance for party
 router.get('/balance/:partyName', async (req, res) => {
   try {
     const balance = await getCustomerBalance(decodeURIComponent(req.params.partyName));
@@ -88,18 +88,17 @@ router.get('/outstanding', async (req, res) => {
 // POST create credit sale
 router.post('/', async (req, res) => {
   try {
-    const { date, partyName, materialName, quantity, unit, rate, amount, notes, items, loading, transport } = req.body;
+    const { date, partyName, materialName, quantity, unit, rate, amount, notes, items, loading, rent } = req.body;
     if (!partyName || !materialName || !quantity || !rate) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
-   const itemsTotal = items && items.length > 0
-  ? items.reduce((s, i) => s + (i.amount || 0), 0)
-  : quantity * rate;
-const calculatedAmount = itemsTotal + (loading || 0) + (rent || 0);
-if (Math.abs(calculatedAmount - amount) > 1) {
-  return res.status(400).json({ error: 'Amount mismatch' });
-}
-    // Auto-create party if not exists
+    const itemsTotal = items && items.length > 0
+      ? items.reduce((s, i) => s + (i.amount || 0), 0)
+      : quantity * rate;
+    const calculatedAmount = itemsTotal + (loading || 0) + (rent || 0);
+    if (Math.abs(calculatedAmount - amount) > 1) {
+      return res.status(400).json({ error: 'Amount mismatch' });
+    }
     await Party.findOneAndUpdate(
       { name: partyName },
       { name: partyName, type: 'customer' },
@@ -110,7 +109,7 @@ if (Math.abs(calculatedAmount - amount) > 1) {
       partyName, materialName, quantity, unit: unit || 'kg', rate, amount, notes,
       items: items || [],
       loading: loading || 0,
-      transport: transport || 0
+      rent: rent || 0
     });
     await sale.save();
     const currentBalance = await getCustomerBalance(partyName);
@@ -126,14 +125,20 @@ router.put('/:id', async (req, res) => {
     const existing = await CreditSale.findById(req.params.id);
     if (!existing || existing.isDeleted) return res.status(404).json({ error: 'Not found' });
     const oldData = existing.toObject();
-    const { date, partyName, materialName, quantity, unit, rate, amount, notes } = req.body;
-    const calculatedAmount = quantity * rate;
-    if (Math.abs(calculatedAmount - amount) > 0.01) return res.status(400).json({ error: 'Amount mismatch' });
+    const { date, partyName, materialName, quantity, unit, rate, amount, notes, items, loading, rent } = req.body;
+    const itemsTotal = items && items.length > 0
+      ? items.reduce((s, i) => s + (i.amount || 0), 0)
+      : quantity * rate;
+    const calculatedAmount = itemsTotal + (loading || 0) + (rent || 0);
+    if (Math.abs(calculatedAmount - amount) > 1) return res.status(400).json({ error: 'Amount mismatch' });
     existing.editHistory.push({ changes: oldData, editedAt: new Date() });
     Object.assign(existing, {
       date: date ? moment.tz(date, IST).toDate() : existing.date,
       partyName: partyName || existing.partyName,
-      materialName, quantity, unit: unit || existing.unit, rate, amount, notes
+      materialName, quantity, unit: unit || existing.unit, rate, amount, notes,
+      items: items || existing.items,
+      loading: loading || 0,
+      rent: rent || 0
     });
     await existing.save();
     const currentBalance = await getCustomerBalance(existing.partyName);
